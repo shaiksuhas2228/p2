@@ -7,9 +7,9 @@
     "types": []
   },
   "files": [
-    "RevHub/src/main.ts"
+    "src/main.ts"
   ],
   "include": [
-    "RevHub/src/**/*.d.ts"
+    "src/**/*.d.ts"
   ]
 }

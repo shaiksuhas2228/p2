@@ -7,15 +7,15 @@
       "projectType": "application",
       "schematics": {},
       "root": "",
-      "sourceRoot": "RevHub/src",
+      "sourceRoot": "src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
             "outputPath": "dist/rev-hub",
-            "index": "RevHub/src/index.html",
-            "browser": "RevHub/src/main.ts",
+            "index": "src/index.html",
+            "browser": "src/main.ts",
             "polyfills": [
               "zone.js"
             ],
@@ -23,11 +23,11 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "RevHub/public"
+                "input": "public"
               }
             ],
             "styles": [
-              "RevHub/src/styles.css"
+              "src/styles.css"
             ],
             "scripts": []
           },
@@ -81,11 +81,11 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "RevHub/public"
+                "input": "public"
               }
             ],
             "styles": [
-              "RevHub/src/styles.css"
+              "src/styles.css"
             ],
             "scripts": []
           }
