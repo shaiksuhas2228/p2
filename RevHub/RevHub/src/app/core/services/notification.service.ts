@@ -41,4 +41,8 @@ export class NotificationService {
   rejectFollowRequest(followId: number): Observable<string> {
     return this.http.post<string>(`${this.apiUrl}/follow-request/${followId}/reject`, {});
   }
+
+  deleteNotification(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`);
+  }
 }

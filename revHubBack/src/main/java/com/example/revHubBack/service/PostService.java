@@ -29,6 +29,9 @@ public class PostService {
 
     @Autowired
     private CommentRepository commentRepository;
+    
+    @Autowired
+    private NotificationMongoService notificationService;
 
     public Page<Post> getAllPosts(Pageable pageable) {
         System.out.println("Getting all posts with page: " + pageable.getPageNumber() + ", size: " + pageable.getPageSize());
@@ -72,6 +75,10 @@ public class PostService {
         
         post.setAuthor(author);
         Post savedPost = postRepository.save(post);
+        
+        // Check for mentions in the post content
+        processMentions(savedPost, author);
+        
         System.out.println("Post saved with ID: " + savedPost.getId() + ", MediaType: " + savedPost.getMediaType());
         return savedPost;
     }
@@ -118,6 +125,9 @@ public class PostService {
             like.setUser(user);
             post.getLikes().add(like);
             post.setLikesCount(post.getLikesCount() + 1);
+            
+            // Create like notification
+            notificationService.createLikeNotification(post.getAuthor(), user, postId);
         }
 
         postRepository.save(post);
@@ -180,5 +190,48 @@ public class PostService {
         post.setCommentsCount(Math.max(0, post.getCommentsCount() - 1));
         postRepository.save(post);
         System.out.println("[SERVICE] Post comment count updated to: " + post.getCommentsCount());
+    }
+    
+    public List<Post> searchPosts(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return new java.util.ArrayList<>();
+        }
+        
+        String searchTerm = query.trim().toLowerCase();
+        List<Post> allPosts = postRepository.findAllByOrderByCreatedDateDesc();
+        
+        return allPosts.stream()
+            .filter(post -> {
+                String content = post.getContent().toLowerCase();
+                String authorUsername = post.getAuthor().getUsername().toLowerCase();
+                
+                // Search in content, hashtags, and author username
+                return content.contains(searchTerm) || 
+                       authorUsername.contains(searchTerm) ||
+                       (searchTerm.startsWith("#") && content.contains(searchTerm)) ||
+                       (!searchTerm.startsWith("#") && content.contains("#" + searchTerm));
+            })
+            .collect(java.util.stream.Collectors.toList());
+    }
+    
+    private void processMentions(Post post, User author) {
+        String content = post.getContent();
+        if (content == null) return;
+        
+        // Find all mentions in the format @username
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("@(\\w+)");
+        java.util.regex.Matcher matcher = pattern.matcher(content);
+        
+        while (matcher.find()) {
+            String mentionedUsername = matcher.group(1);
+            try {
+                User mentionedUser = userRepository.findByUsername(mentionedUsername).orElse(null);
+                if (mentionedUser != null && !mentionedUser.getId().equals(author.getId())) {
+                    notificationService.createMentionNotification(mentionedUser, author, post.getId(), content);
+                }
+            } catch (Exception e) {
+                System.out.println("Error processing mention for user: " + mentionedUsername + ", " + e.getMessage());
+            }
+        }
     }
 }

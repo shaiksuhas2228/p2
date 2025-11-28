@@ -28,10 +28,8 @@ public class PostController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            System.out.println("GET /posts called with page=" + page + ", size=" + size);
             Pageable pageable = PageRequest.of(page, size);
             Page<Post> posts = postService.getAllPosts(pageable);
-            System.out.println("Returning " + posts.getContent().size() + " posts");
             
             Map<String, Object> response = new HashMap<>();
             response.put("content", posts.getContent());
@@ -42,8 +40,6 @@ public class PostController {
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            System.err.println("Error getting posts: " + e.getMessage());
-            e.printStackTrace();
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("content", new ArrayList<>());
             errorResponse.put("totalElements", 0);
@@ -67,30 +63,19 @@ public class PostController {
             @RequestParam(value = "file", required = false) org.springframework.web.multipart.MultipartFile file,
             Authentication authentication) {
         try {
-            System.out.println("[MULTIPART] Creating post for user: " + authentication.getName());
-            System.out.println("[MULTIPART] Post content: " + content);
-            System.out.println("[MULTIPART] File received: " + (file != null ? file.getOriginalFilename() + " (" + file.getContentType() + ", " + file.getSize() + " bytes)" : "null"));
             Post post = postService.createPost(content, file, authentication.getName());
-            System.out.println("[MULTIPART] Post created successfully with ID: " + post.getId());
             return ResponseEntity.ok(post);
         } catch (Exception e) {
-            System.err.println("[MULTIPART] Error creating post: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
     
     @PostMapping(consumes = {"application/json"})
     public ResponseEntity<Post> createPostJson(@Valid @RequestBody PostRequest postRequest, Authentication authentication) {
-        System.out.println("[JSON] WARNING: JSON endpoint called instead of multipart!");
         try {
-            System.out.println("[JSON] Creating post for user: " + authentication.getName());
-            System.out.println("[JSON] Post content: " + postRequest.getContent());
-            System.out.println("[JSON] Image URL: " + (postRequest.getImageUrl() != null ? postRequest.getImageUrl().substring(0, Math.min(50, postRequest.getImageUrl().length())) + "..." : "null"));
             Post post = postService.createPost(postRequest.getContent(), null, authentication.getName());
             if (postRequest.getImageUrl() != null && !postRequest.getImageUrl().isEmpty()) {
                 post.setImageUrl(postRequest.getImageUrl());
-                // Use provided mediaType or detect from URL
                 if (postRequest.getMediaType() != null && !postRequest.getMediaType().isEmpty()) {
                     post.setMediaType(postRequest.getMediaType());
                 } else if (postRequest.getImageUrl().startsWith("data:video/")) {
@@ -100,11 +85,8 @@ public class PostController {
                 }
             }
             post = postService.savePost(post);
-            System.out.println("[JSON] Post created successfully with ID: " + post.getId());
             return ResponseEntity.ok(post);
         } catch (Exception e) {
-            System.err.println("[JSON] Error creating post: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
@@ -116,6 +98,16 @@ public class PostController {
             return ResponseEntity.ok("Post deleted successfully!");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
+    @GetMapping("/search")
+    public ResponseEntity<List<Post>> searchPosts(@RequestParam String query) {
+        try {
+            List<Post> posts = postService.searchPosts(query);
+            return ResponseEntity.ok(posts);
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ArrayList<>());
         }
     }
 

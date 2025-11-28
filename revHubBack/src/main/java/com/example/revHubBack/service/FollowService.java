@@ -63,17 +63,24 @@ public class FollowService {
     }
     
     public void unfollowUser(String currentUsername, String targetUsername) {
+        System.out.println("[UNFOLLOW] Current user: " + currentUsername + " wants to unfollow: " + targetUsername);
+        
         User currentUser = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
         
         User targetUser = userRepository.findByUsername(targetUsername)
                 .orElseThrow(() -> new RuntimeException("Target user not found"));
         
+        System.out.println("[UNFOLLOW] Looking for follow: " + currentUsername + " -> " + targetUsername);
+        // Find where current user is following target user
         Optional<Follow> follow = followRepository.findByFollowerAndFollowing(currentUser, targetUser);
         
         if (follow.isPresent()) {
+            System.out.println("[UNFOLLOW] Found follow relationship, deleting...");
             followRepository.delete(follow.get());
+            System.out.println("[UNFOLLOW] Successfully unfollowed");
         } else {
+            System.out.println("[UNFOLLOW] No follow relationship found");
             throw new RuntimeException("Not following this user");
         }
     }
@@ -169,16 +176,16 @@ public class FollowService {
         User follower = userRepository.findByUsername(followerUsername)
                 .orElseThrow(() -> new RuntimeException("Follower not found"));
         
-        System.out.println("Looking for follow: " + followerUsername + " -> " + currentUsername);
+        System.out.println("[REMOVE_FOLLOWER] Looking for follow: " + followerUsername + " -> " + currentUsername);
         Optional<Follow> follow = followRepository.findByFollowerAndFollowing(follower, currentUser);
         
         if (follow.isPresent()) {
             Follow followRelation = follow.get();
-            System.out.println("Found follow relationship with status: " + followRelation.getStatus());
+            System.out.println("[REMOVE_FOLLOWER] Found follow relationship with status: " + followRelation.getStatus());
             followRepository.delete(followRelation);
-            System.out.println("Follower removed successfully");
+            System.out.println("[REMOVE_FOLLOWER] Follower removed successfully");
         } else {
-            System.out.println("No follow relationship found");
+            System.out.println("[REMOVE_FOLLOWER] No follow relationship found");
             throw new RuntimeException("This user is not following you");
         }
     }

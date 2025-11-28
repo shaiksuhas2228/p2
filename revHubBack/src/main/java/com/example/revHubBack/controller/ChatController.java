@@ -49,4 +49,24 @@ public class ChatController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    
+    @GetMapping("/contacts")
+    public ResponseEntity<List<String>> getChatContacts(Authentication authentication) {
+        try {
+            List<String> contacts = chatService.getChatContacts(authentication.getName());
+            return ResponseEntity.ok(contacts);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    @GetMapping("/unread-count/{username}")
+    public ResponseEntity<Long> getUnreadCount(@PathVariable String username, Authentication authentication) {
+        try {
+            long count = chatService.getUnreadMessageCount(authentication.getName(), username);
+            return ResponseEntity.ok(count);
+        } catch (RuntimeException e) {
+            return ResponseEntity.ok(0L);
+        }
+    }
 }

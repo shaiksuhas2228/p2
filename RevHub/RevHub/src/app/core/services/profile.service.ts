@@ -85,6 +85,10 @@ export class ProfileService {
   }
   
   removeFollower(username: string): Observable<{message: string}> {
-    return this.http.delete<{message: string}>(`${this.apiUrl}/unfollow/${username}`);
+    return this.http.delete<{message: string}>(`${this.apiUrl}/remove-follower/${username}`);
+  }
+  
+  searchUsers(query: string): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/search?query=${encodeURIComponent(query)}`);
   }
 }

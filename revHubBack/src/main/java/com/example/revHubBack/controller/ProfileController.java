@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,12 +103,15 @@ public class ProfileController {
     
     @DeleteMapping("/unfollow/{username}")
     public ResponseEntity<Map<String, String>> unfollowUser(@PathVariable String username, Authentication authentication) {
+        System.out.println("[CONTROLLER] Unfollow request: " + authentication.getName() + " -> " + username);
         try {
-            followService.removeFollower(authentication.getName(), username);
+            followService.unfollowUser(authentication.getName(), username);
             Map<String, String> response = new HashMap<>();
-            response.put("message", "Follower removed");
+            response.put("message", "Unfollowed successfully");
+            System.out.println("[CONTROLLER] Unfollow successful");
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
+            System.out.println("[CONTROLLER] Unfollow error: " + e.getMessage());
             Map<String, String> error = new HashMap<>();
             error.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -210,5 +214,29 @@ public class ProfileController {
         }
     }
     
+    @DeleteMapping("/remove-follower/{username}")
+    public ResponseEntity<Map<String, String>> removeFollower(@PathVariable String username, Authentication authentication) {
+        try {
+            followService.removeFollower(authentication.getName(), username);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Follower removed successfully");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+    
+    @GetMapping("/search")
+    public ResponseEntity<List<User>> searchUsers(@RequestParam String query) {
+        try {
+            List<User> users = userRepository.findByUsernameContainingIgnoreCase(query);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            System.err.println("Error searching users: " + e.getMessage());
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+    }
 
 }

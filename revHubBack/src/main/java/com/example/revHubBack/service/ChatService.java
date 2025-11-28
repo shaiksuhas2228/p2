@@ -4,6 +4,7 @@ import com.example.revHubBack.entity.ChatMessage;
 import com.example.revHubBack.entity.User;
 import com.example.revHubBack.repository.ChatMessageRepository;
 import com.example.revHubBack.repository.UserRepository;
+import com.example.revHubBack.service.NotificationMongoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,9 @@ public class ChatService {
     
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private NotificationMongoService notificationService;
     
     public ChatMessage sendMessage(String senderUsername, String receiverUsername, String content) {
         User sender = userRepository.findByUsername(senderUsername)
@@ -34,7 +38,12 @@ public class ChatService {
         message.setContent(content);
         message.setTimestamp(LocalDateTime.now());
         
-        return chatMessageRepository.save(message);
+        ChatMessage savedMessage = chatMessageRepository.save(message);
+        
+        // Create notification for new message
+        createMessageNotification(receiver, sender, content);
+        
+        return savedMessage;
     }
     
     public List<ChatMessage> getConversation(String username1, String username2) {
@@ -63,5 +72,32 @@ public class ChatService {
                     msg.setRead(true);
                     chatMessageRepository.save(msg);
                 });
+    }
+    
+    public List<String> getChatContacts(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        List<ChatMessage> messages = chatMessageRepository.findChatContactsRaw(user.getId().toString());
+        
+        return messages.stream()
+            .flatMap(msg -> java.util.stream.Stream.of(msg.getSenderUsername(), msg.getReceiverUsername()))
+            .filter(contactUsername -> !contactUsername.equals(username))
+            .distinct()
+            .collect(java.util.stream.Collectors.toList());
+    }
+    
+    private void createMessageNotification(User receiver, User sender, String content) {
+        notificationService.createMessageNotification(receiver, sender, content);
+    }
+    
+    public long getUnreadMessageCount(String receiverUsername, String senderUsername) {
+        User receiver = userRepository.findByUsername(receiverUsername)
+                .orElseThrow(() -> new RuntimeException("Receiver not found"));
+        
+        User sender = userRepository.findByUsername(senderUsername)
+                .orElseThrow(() -> new RuntimeException("Sender not found"));
+        
+        return chatMessageRepository.countUnreadMessages(receiver.getId().toString(), sender.getId().toString());
     }
 }

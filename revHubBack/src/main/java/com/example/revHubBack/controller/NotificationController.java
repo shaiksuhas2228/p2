@@ -71,4 +71,14 @@ public class NotificationController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteNotification(@PathVariable String id, Authentication authentication) {
+        try {
+            notificationService.deleteNotification(id, authentication.getName());
+            return ResponseEntity.ok("Notification deleted");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

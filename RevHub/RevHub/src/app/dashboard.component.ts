@@ -66,8 +66,12 @@ export class DashboardComponent implements OnInit {
   
   selectedChat: string | null = null;
   newMessage = '';
-  contacts = ['Karthik', 'Sai'];
+  contacts: string[] = [];
   messages: { [key: string]: any[] } = {};
+  chatSearchQuery = '';
+  chatSearchResults: any[] = [];
+  unreadCounts: { [key: string]: number } = {};
+  Object = Object;
 
   constructor(
     private themeService: ThemeService, 
@@ -101,31 +105,16 @@ export class DashboardComponent implements OnInit {
   }
 
   loadFeeds() {
-    console.log('loadFeeds called');
     this.isLoading = true;
     this.postService.getPosts(0, 10).subscribe({
       next: (response) => {
-        console.log('Posts loaded from backend:', response);
         this.posts = response.content || [];
-        // Debug: Log each post's media info
-        this.posts.forEach(post => {
-          if (post.imageUrl) {
-            console.log('Post media:', {
-              id: post.id,
-              mediaType: post.mediaType,
-              imageUrl: post.imageUrl.substring(0, 50) + '...',
-              hasVideo: post.imageUrl.startsWith('data:video/'),
-              hasImage: post.imageUrl.startsWith('data:image/')
-            });
-          }
-        });
         this.currentPage = response.number || 0;
         this.hasMorePosts = (response.number || 0) < (response.totalPages || 0) - 1;
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error loading posts:', error);
-        this.posts = []; // Clear posts on error
+        this.posts = [];
         this.isLoading = false;
       }
     });
@@ -159,6 +148,15 @@ export class DashboardComponent implements OnInit {
       this.loadFeeds();
     } else if (tab === 'notifications') {
       this.loadNotifications();
+    } else if (tab === 'chat') {
+      // Load following list for chat search if not already loaded
+      if (this.followingList.length === 0) {
+        this.loadFollowing();
+      }
+      // Load previous chat contacts
+      this.loadChatContacts();
+      // Refresh unread counts
+      setTimeout(() => this.refreshUnreadCounts(), 500);
     }
   }
 
@@ -222,22 +220,19 @@ export class DashboardComponent implements OnInit {
   createPost() {
     if (this.newPostContent.trim()) {
       if (this.selectedFile) {
-        console.log('Creating post with file:', this.selectedFile.name, this.selectedFile.type);
         const formData = new FormData();
         formData.append('content', this.newPostContent);
         formData.append('file', this.selectedFile);
         
         this.postService.createPostWithFile(formData).subscribe({
           next: (response) => {
-            console.log('Post with file created:', response);
             this.resetPostForm();
           },
           error: (error) => {
-            console.error('Error creating post with file:', error);
+            // Handle error
           }
         });
       } else {
-        console.log('Creating text-only post');
         const postData = {
           content: this.newPostContent,
           imageUrl: ''
@@ -245,11 +240,10 @@ export class DashboardComponent implements OnInit {
         
         this.postService.createPost(postData).subscribe({
           next: (response) => {
-            console.log('Text post created:', response);
             this.resetPostForm();
           },
           error: (error) => {
-            console.error('Error creating post:', error);
+            // Handle error
           }
         });
       }
@@ -262,7 +256,6 @@ export class DashboardComponent implements OnInit {
     this.selectedFileType = '';
     this.selectedFilePreview = null;
     this.postVisibility = 'public';
-    // Clear file input
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
     this.setActiveTab('feed');
@@ -282,7 +275,6 @@ export class DashboardComponent implements OnInit {
         this.selectedFileType = 'video';
       }
       
-      // Create base64 preview instead of blob URL
       const reader = new FileReader();
       reader.onload = (e) => {
         this.selectedFilePreview = e.target?.result as string;
@@ -298,7 +290,7 @@ export class DashboardComponent implements OnInit {
         post.isLiked = response.isLiked;
       },
       error: (error) => {
-        console.error('Error toggling like:', error);
+        // Handle error
       }
     });
   }
@@ -314,7 +306,7 @@ export class DashboardComponent implements OnInit {
           post.commentsList = comments;
         },
         error: (error) => {
-          console.error('Error loading comments:', error);
+          // Handle error
         }
       });
     }
@@ -334,11 +326,11 @@ export class DashboardComponent implements OnInit {
             post.sharesCount = response.sharesCount;
           },
           error: (error) => {
-            console.error('Error updating share count:', error);
+            // Handle error
           }
         });
       }).catch((error) => {
-        console.log('Error sharing:', error);
+        // Handle error
       });
     } else {
       // Fallback for browsers that don't support Web Share API
@@ -382,14 +374,13 @@ export class DashboardComponent implements OnInit {
           this.newComment = '';
         },
         error: (error) => {
-          console.error('Error adding comment:', error);
+          // Handle error
         }
       });
     }
   }
 
   deleteComment(post: any, commentId: number) {
-    console.log('Delete comment clicked:', commentId, 'from post:', post.id);
     this.commentToDelete = { post, commentId };
     this.showDeleteCommentConfirm = true;
   }
@@ -397,28 +388,21 @@ export class DashboardComponent implements OnInit {
   confirmDeleteComment() {
     if (this.commentToDelete) {
       const { post, commentId } = this.commentToDelete;
-      console.log('Deleting comment:', commentId, 'from post:', post.id);
       this.postService.deleteComment(post.id, commentId).subscribe({
         next: (response) => {
-          console.log('Comment deleted successfully:', response);
-          // Reload comments from backend to ensure UI is in sync
           this.postService.getComments(post.id).subscribe({
             next: (comments) => {
               post.commentsList = comments;
               post.commentsCount = comments.length;
             },
             error: (error) => {
-              console.error('Error reloading comments:', error);
+              // Handle error
             }
           });
           this.showDeleteCommentConfirm = false;
           this.commentToDelete = null;
         },
         error: (error) => {
-          console.error('Error deleting comment:', error);
-          console.error('Error details:', error.error);
-          console.error('Error status:', error.status);
-          console.error('Failed to delete comment:', error.error || error.message);
           this.showDeleteCommentConfirm = false;
           this.commentToDelete = null;
         }
@@ -475,6 +459,8 @@ export class DashboardComponent implements OnInit {
           user.followStatus = 'ACCEPTED';
         }
         this.loadUserProfile();
+        // Remove user from suggestions after following
+        this.suggestedUsers = this.suggestedUsers.filter(u => u.username !== user.username);
       },
       error: (error) => {
         console.error('Error following user:', error);
@@ -488,11 +474,14 @@ export class DashboardComponent implements OnInit {
         console.log(response.message);
         user.followStatus = 'NOT_FOLLOWING';
         this.loadUserProfile();
+        // Update suggested users follow status
+        this.updateSuggestedUserStatus(user.username, 'NOT_FOLLOWING');
       },
       error: (error) => {
         console.error('Error cancelling follow request:', error);
         // Fallback: still update UI to prevent stuck state
         user.followStatus = 'NOT_FOLLOWING';
+        this.updateSuggestedUserStatus(user.username, 'NOT_FOLLOWING');
       }
     });
   }
@@ -511,14 +500,24 @@ export class DashboardComponent implements OnInit {
   }
 
   unfollowUser(user: any) {
+    console.log('Attempting to unfollow user:', user.username);
     this.profileService.unfollowUser(user.username).subscribe({
       next: (response) => {
-        console.log(response.message);
+        console.log('Unfollow success:', response.message);
         user.followStatus = 'NOT_FOLLOWING';
         this.loadUserProfile();
+        // Refresh following list if currently displayed
+        if (this.showFollowingList) {
+          this.loadFollowing();
+        }
+        // Update suggested users follow status
+        this.updateSuggestedUserStatus(user.username, 'NOT_FOLLOWING');
       },
       error: (error) => {
         console.error('Error unfollowing user:', error);
+        console.error('Error details:', error.error);
+        console.error('Status:', error.status);
+        console.error('URL:', error.url);
       }
     });
   }
@@ -534,6 +533,9 @@ export class DashboardComponent implements OnInit {
   selectChat(contact: string) {
     this.selectedChat = contact;
     this.loadConversation(contact);
+    // Mark messages as read and reset unread count
+    this.chatService.markAsRead(contact).subscribe();
+    this.unreadCounts[contact] = 0;
   }
   
   loadConversation(username: string) {
@@ -582,8 +584,9 @@ export class DashboardComponent implements OnInit {
   }
 
   searchQuery = '';
-  searchType = 'users';
-  allUsers = ['Akram', 'Karthik', 'Sai', 'Priya', 'Arjun', 'Rohit'];
+  searchResults: any[] = [];
+  isSearching = false;
+  searchActiveTab = 'users';
   showFollowersList = false;
   showFollowingList = false;
   followersList: User[] = [];
@@ -622,25 +625,35 @@ export class DashboardComponent implements OnInit {
     }
   }
   
-  get filteredUsers() {
-    if (!this.searchQuery.trim() || this.searchType !== 'users') return [];
-    return this.allUsers.filter(user => 
-      user.toLowerCase().includes(this.searchQuery.toLowerCase())
-    );
+  onSearchInput() {
+    if (!this.searchQuery.trim()) {
+      this.searchResults = [];
+      return;
+    }
+    
+    this.isSearching = true;
+    this.performSearch();
   }
-
-  get filteredPosts() {
-    if (!this.searchQuery.trim() || this.searchType !== 'posts') return [];
-    const query = this.searchQuery.toLowerCase();
-    return this.posts.filter(post => 
-      post.content.toLowerCase().includes(query) ||
-      post.content.toLowerCase().includes('#' + query) ||
-      post.author.toLowerCase().includes(query)
-    );
-  }
-
-  switchSearchType(type: string) {
-    this.searchType = type;
+  
+  performSearch() {
+    const query = this.searchQuery.trim();
+    if (!query) return;
+    
+    // Search both users and posts
+    Promise.all([
+      this.profileService.searchUsers(query).toPromise(),
+      this.postService.searchPosts(query).toPromise()
+    ]).then(([users, posts]) => {
+      this.searchResults = [
+        ...(users || []).map(user => ({ ...user, type: 'user' })),
+        ...(posts || []).map(post => ({ ...post, type: 'post' }))
+      ];
+      this.isSearching = false;
+    }).catch(error => {
+      console.error('Search error:', error);
+      this.searchResults = [];
+      this.isSearching = false;
+    });
   }
 
   deletePost(post: any) {
@@ -695,11 +708,9 @@ export class DashboardComponent implements OnInit {
       // Then call backend
       this.postService.deletePost(postId).subscribe({
         next: () => {
-          console.log('Post deleted successfully');
+          // Post deleted successfully
         },
         error: (error) => {
-          console.error('Error deleting post:', error);
-          // Reload posts if backend delete failed
           this.loadFeeds();
           this.loadUserProfile();
         }
@@ -843,8 +854,17 @@ export class DashboardComponent implements OnInit {
       this.notificationService.acceptFollowRequest(notification.followRequestId).subscribe({
         next: () => {
           console.log('Follow request accepted successfully');
-          this.loadNotifications();
-          this.loadUserProfile();
+          // Remove notification from list immediately
+          this.notifications = this.notifications.filter(n => n.id !== notification.id);
+          this.unreadNotificationCount = Math.max(0, this.unreadNotificationCount - 1);
+          // Add delay to ensure backend processing is complete
+          setTimeout(() => {
+            this.loadUserProfile();
+            this.loadSuggestedUsers();
+            if (this.showFollowersList) {
+              this.loadFollowers();
+            }
+          }, 500);
         },
         error: (error) => {
           console.error('Error accepting follow request:', error);
@@ -858,7 +878,10 @@ export class DashboardComponent implements OnInit {
       this.notificationService.rejectFollowRequest(notification.followRequestId).subscribe({
         next: () => {
           console.log('Follow request rejected successfully');
-          this.loadNotifications();
+          // Remove notification from list immediately
+          this.notifications = this.notifications.filter(n => n.id !== notification.id);
+          this.unreadNotificationCount = Math.max(0, this.unreadNotificationCount - 1);
+          this.loadUserProfile();
         },
         error: (error) => {
           console.error('Error rejecting follow request:', error);
@@ -870,9 +893,12 @@ export class DashboardComponent implements OnInit {
   loadSuggestedUsers() {
     this.profileService.getAllUsers().subscribe({
       next: (users) => {
-        const filteredUsers = users.filter(user => user.username !== this.currentUser?.username).slice(0, 5);
+        const filteredUsers = users.filter(user => user.username !== this.currentUser?.username);
         
         // Set default follow status and load actual status if authenticated
+        const usersWithStatus: any[] = [];
+        let processedCount = 0;
+        
         filteredUsers.forEach(user => {
           user.followStatus = 'NOT_FOLLOWING';
           
@@ -880,16 +906,36 @@ export class DashboardComponent implements OnInit {
             this.profileService.getFollowStatus(user.username).subscribe({
               next: (response) => {
                 user.followStatus = response.status;
+                processedCount++;
+                
+                // Only add users who are not followed or pending
+                if (user.followStatus === 'NOT_FOLLOWING') {
+                  usersWithStatus.push(user);
+                }
+                
+                // Update suggestions when all users are processed
+                if (processedCount === filteredUsers.length) {
+                  this.suggestedUsers = usersWithStatus.slice(0, 5);
+                }
               },
               error: (error) => {
-                // Silently set to NOT_FOLLOWING on error
                 user.followStatus = 'NOT_FOLLOWING';
+                processedCount++;
+                usersWithStatus.push(user);
+                
+                if (processedCount === filteredUsers.length) {
+                  this.suggestedUsers = usersWithStatus.slice(0, 5);
+                }
               }
             });
+          } else {
+            usersWithStatus.push(user);
           }
         });
         
-        this.suggestedUsers = filteredUsers;
+        if (!this.currentUser) {
+          this.suggestedUsers = usersWithStatus.slice(0, 5);
+        }
       },
       error: (error) => {
         console.error('Error loading suggested users:', error);
@@ -920,6 +966,121 @@ export class DashboardComponent implements OnInit {
         console.error('Error details:', error.error);
         console.error('Status:', error.status);
         console.error('URL:', error.url);
+      }
+    });
+  }
+  
+  updateSuggestedUserStatus(username: string, status: string) {
+    const suggestedUser = this.suggestedUsers.find(u => u.username === username);
+    if (suggestedUser) {
+      suggestedUser.followStatus = status;
+    }
+  }
+  
+  getUserResults() {
+    return this.searchResults.filter(result => 
+      result.type === 'user' && result.username !== this.currentUser?.username
+    );
+  }
+  
+  getPostResults() {
+    return this.searchResults.filter(result => result.type === 'post');
+  }
+  
+  setSearchTab(tab: string) {
+    this.searchActiveTab = tab;
+  }
+  
+  dismissNotification(notification: Notification) {
+    this.notificationService.deleteNotification(notification.id).subscribe({
+      next: () => {
+        this.notifications = this.notifications.filter(n => n.id !== notification.id);
+        if (!notification.readStatus) {
+          this.unreadNotificationCount = Math.max(0, this.unreadNotificationCount - 1);
+        }
+      },
+      error: (error) => {
+        console.error('Error deleting notification:', error);
+        // Still remove from UI even if backend fails
+        this.notifications = this.notifications.filter(n => n.id !== notification.id);
+        if (!notification.readStatus) {
+          this.unreadNotificationCount = Math.max(0, this.unreadNotificationCount - 1);
+        }
+      }
+    });
+  }
+  
+  handleNotificationClick(notification: Notification) {
+    this.markNotificationAsRead(notification);
+    
+    if (notification.type === 'MESSAGE' && notification.fromUsername) {
+      // Navigate to chat tab and open conversation
+      this.setActiveTab('chat');
+      setTimeout(() => {
+        this.selectedChat = notification.fromUsername!;
+        this.loadConversation(notification.fromUsername!);
+        this.unreadCounts[notification.fromUsername!] = 0;
+      }, 100);
+    }
+  }
+  
+  refreshUnreadCounts() {
+    this.contacts.forEach(contact => {
+      this.chatService.getUnreadCount(contact).subscribe({
+        next: (count) => {
+          this.unreadCounts[contact] = count;
+        },
+        error: (error) => {
+          this.unreadCounts[contact] = 0;
+        }
+      });
+    });
+  }
+  
+  onChatSearchInput() {
+    if (!this.chatSearchQuery.trim()) {
+      this.chatSearchResults = [];
+      return;
+    }
+    
+    // Search from following list
+    this.chatSearchResults = this.followingList.filter(user => 
+      user.username.toLowerCase().includes(this.chatSearchQuery.toLowerCase())
+    );
+  }
+  
+  startChat(user: any) {
+    this.selectedChat = user.username;
+    this.chatSearchQuery = '';
+    this.chatSearchResults = [];
+    this.loadConversation(user.username);
+    // Add to contacts if not already there
+    if (!this.contacts.includes(user.username)) {
+      this.contacts.unshift(user.username);
+    }
+  }
+  
+  loadChatContacts() {
+    this.chatService.getChatContacts().subscribe({
+      next: (contacts) => {
+        console.log('Chat contacts loaded:', contacts);
+        this.contacts = contacts;
+        // Load unread counts for each contact
+        contacts.forEach(contact => {
+          this.chatService.getUnreadCount(contact).subscribe({
+            next: (count) => {
+              console.log(`Unread count for ${contact}: ${count}`);
+              this.unreadCounts[contact] = count;
+            },
+            error: (error) => {
+              console.error(`Error loading unread count for ${contact}:`, error);
+              this.unreadCounts[contact] = 0;
+            }
+          });
+        });
+      },
+      error: (error) => {
+        console.error('Error loading chat contacts:', error);
       }
     });
   }

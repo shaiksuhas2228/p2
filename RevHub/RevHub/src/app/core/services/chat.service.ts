@@ -36,4 +36,12 @@ export class ChatService {
   markAsRead(username: string): Observable<string> {
     return this.http.post<string>(`${this.apiUrl}/mark-read/${username}`, {});
   }
+
+  getChatContacts(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/contacts`);
+  }
+
+  getUnreadCount(username: string): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/unread-count/${username}`);
+  }
 }

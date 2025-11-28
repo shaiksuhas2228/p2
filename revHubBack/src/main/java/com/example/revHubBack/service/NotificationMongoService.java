@@ -96,4 +96,65 @@ public class NotificationMongoService {
             System.out.println("Error removing follow request notification: " + e.getMessage());
         }
     }
+    
+    public void createLikeNotification(User postOwner, User liker, Long postId) {
+        // Don't create notification if user likes their own post
+        if (postOwner.getId().equals(liker.getId())) {
+            return;
+        }
+        
+        NotificationMongo notification = new NotificationMongo();
+        notification.setUserId(postOwner.getId().toString());
+        notification.setFromUserId(liker.getId().toString());
+        notification.setFromUsername(liker.getUsername());
+        notification.setFromUserProfilePicture(liker.getProfilePicture());
+        notification.setType("LIKE");
+        notification.setMessage(liker.getUsername() + " liked your post");
+        notification.setPostId(postId);
+        notification.setCreatedDate(LocalDateTime.now());
+        
+        notificationRepository.save(notification);
+    }
+    
+    public void createMentionNotification(User mentionedUser, User mentioner, Long postId, String content) {
+        NotificationMongo notification = new NotificationMongo();
+        notification.setUserId(mentionedUser.getId().toString());
+        notification.setFromUserId(mentioner.getId().toString());
+        notification.setFromUsername(mentioner.getUsername());
+        notification.setFromUserProfilePicture(mentioner.getProfilePicture());
+        notification.setType("MENTION");
+        notification.setMessage(mentioner.getUsername() + " mentioned you in a post");
+        notification.setPostId(postId);
+        notification.setCreatedDate(LocalDateTime.now());
+        
+        notificationRepository.save(notification);
+    }
+    
+    public void deleteNotification(String notificationId, String username) {
+        NotificationMongo notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+        
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (!notification.getUserId().equals(user.getId().toString())) {
+            throw new RuntimeException("Unauthorized to delete this notification");
+        }
+        
+        notificationRepository.delete(notification);
+    }
+    
+    public void createMessageNotification(User receiver, User sender, String content) {
+        NotificationMongo notification = new NotificationMongo();
+        notification.setUserId(receiver.getId().toString());
+        notification.setFromUserId(sender.getId().toString());
+        notification.setFromUsername(sender.getUsername());
+        notification.setFromUserProfilePicture(sender.getProfilePicture());
+        notification.setType("MESSAGE");
+        notification.setMessage(sender.getUsername() + " sent you a message: " + 
+            (content.length() > 30 ? content.substring(0, 30) + "..." : content));
+        notification.setCreatedDate(LocalDateTime.now());
+        
+        notificationRepository.save(notification);
+    }
 }

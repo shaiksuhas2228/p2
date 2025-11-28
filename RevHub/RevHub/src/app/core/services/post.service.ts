@@ -113,6 +113,10 @@ export class PostService {
     console.log('Calling DELETE:', `${this.apiUrl}/${postId}/comments/${commentId}`);
     return this.http.delete(`${this.apiUrl}/${postId}/comments/${commentId}`);
   }
+  
+  searchPosts(query: string): Observable<Post[]> {
+    return this.http.get<Post[]>(`${this.apiUrl}/search?query=${encodeURIComponent(query)}`);
+  }
 }
 
 export interface Comment {
