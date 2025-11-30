@@ -65,10 +65,6 @@ export class RegisterComponent implements OnInit {
         },
         error: (error) => {
           this.isLoading = false;
-          console.error('Full registration error:', error);
-          console.error('Error status:', error.status);
-          console.error('Error message:', error.message);
-          console.error('Error body:', error.error);
           
           if (error.error && typeof error.error === 'string') {
             this.errorMessage = error.error;

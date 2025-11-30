@@ -59,7 +59,6 @@ public class CommentService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
         
-        // Check if user is authorized to delete (comment author or post author)
         if (!comment.getAuthor().getUsername().equals(username) && 
             !post.getAuthor().getUsername().equals(username)) {
             throw new RuntimeException("Not authorized to delete this comment");
@@ -67,7 +66,6 @@ public class CommentService {
         
         commentRepository.delete(comment);
         
-        // Update comment count
         post.setCommentsCount(Math.max(0, post.getCommentsCount() - 1));
         postRepository.save(post);
     }

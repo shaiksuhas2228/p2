@@ -14,6 +14,7 @@ export class FeedComponent implements OnInit {
   isLoading = true;
   currentPage = 0;
   totalPages = 0;
+  activeFeedType = 'universal';
 
   constructor(private postService: PostService) {}
 
@@ -23,26 +24,31 @@ export class FeedComponent implements OnInit {
 
   loadPosts() {
     this.isLoading = true;
-    this.postService.getPosts(this.currentPage, 10).subscribe({
+    this.postService.getPosts(this.currentPage, 10, this.activeFeedType).subscribe({
       next: (response) => {
         this.posts = response.content;
         this.totalPages = response.totalPages;
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error loading posts:', error);
         this.isLoading = false;
       }
     });
+  }
+  
+  switchFeed(feedType: string) {
+    this.activeFeedType = feedType;
+    this.currentPage = 0;
+    this.posts = [];
+    this.loadPosts();
   }
 
   likePost(post: Post) {
     this.postService.likePost(post.id).subscribe({
       next: () => {
-        this.loadPosts(); // Reload to get updated counts
+        this.loadPosts();
       },
       error: (error) => {
-        console.error('Error liking post:', error);
       }
     });
   }
@@ -50,10 +56,9 @@ export class FeedComponent implements OnInit {
   sharePost(post: Post) {
     this.postService.sharePost(post.id).subscribe({
       next: () => {
-        this.loadPosts(); // Reload to get updated counts
+        this.loadPosts();
       },
       error: (error) => {
-        console.error('Error sharing post:', error);
       }
     });
   }
@@ -62,10 +67,9 @@ export class FeedComponent implements OnInit {
     if (content.trim()) {
       this.postService.addComment(post.id, content).subscribe({
         next: () => {
-          this.loadPosts(); // Reload to get updated counts
+          this.loadPosts();
         },
         error: (error) => {
-          console.error('Error adding comment:', error);
         }
       });
     }
@@ -74,12 +78,11 @@ export class FeedComponent implements OnInit {
   loadMore() {
     if (this.currentPage < this.totalPages - 1) {
       this.currentPage++;
-      this.postService.getPosts(this.currentPage, 10).subscribe({
+      this.postService.getPosts(this.currentPage, 10, this.activeFeedType).subscribe({
         next: (response) => {
           this.posts = [...this.posts, ...response.content];
         },
         error: (error) => {
-          console.error('Error loading more posts:', error);
         }
       });
     }

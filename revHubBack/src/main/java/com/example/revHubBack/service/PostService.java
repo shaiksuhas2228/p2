@@ -9,6 +9,7 @@ import com.example.revHubBack.entity.Share;
 import com.example.revHubBack.repository.PostRepository;
 import com.example.revHubBack.repository.UserRepository;
 import com.example.revHubBack.repository.CommentRepository;
+import com.example.revHubBack.repository.FollowRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,19 +33,37 @@ public class PostService {
     
     @Autowired
     private NotificationMongoService notificationService;
+    
+    @Autowired
+    private FollowRepository followRepository;
 
-    public Page<Post> getAllPosts(Pageable pageable) {
-        System.out.println("Getting all posts with page: " + pageable.getPageNumber() + ", size: " + pageable.getPageSize());
-        Page<Post> posts = postRepository.findAllByOrderByCreatedDateDesc(pageable);
-        System.out.println("Found " + posts.getTotalElements() + " total posts, " + posts.getContent().size() + " in this page");
-        return posts;
+    public Page<Post> getUniversalPosts(Pageable pageable) {
+        return postRepository.findPublicPosts(pageable);
+    }
+    
+    public Page<Post> getFollowersPosts(Pageable pageable, String currentUsername) {
+        if (currentUsername == null) {
+            return postRepository.findPublicPosts(pageable);
+        }
+        
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        if (currentUser == null) {
+            return postRepository.findPublicPosts(pageable);
+        }
+        
+        List<User> following = followRepository.findFollowing(currentUser);
+        List<Long> followingIds = following.stream()
+            .map(User::getId)
+            .collect(java.util.stream.Collectors.toList());
+        
+        return postRepository.findFollowersPosts(currentUser.getId(), followingIds, pageable);
     }
 
     public Optional<Post> getPostById(Long id) {
         return postRepository.findById(id);
     }
 
-    public Post createPost(String content, org.springframework.web.multipart.MultipartFile file, String username) {
+    public Post createPost(String content, org.springframework.web.multipart.MultipartFile file, String username, String visibility) {
         User author = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -67,19 +86,27 @@ public class PostService {
                     }
                 }
                 
-                System.out.println("File processed: " + file.getOriginalFilename() + ", MIME: " + mimeType + ", MediaType: " + post.getMediaType());
+
             } catch (Exception e) {
                 throw new RuntimeException("Error processing file: " + e.getMessage());
             }
         }
         
         post.setAuthor(author);
+        
+        // Set visibility
+        if (visibility != null) {
+            try {
+                post.setVisibility(com.example.revHubBack.entity.PostVisibility.valueOf(visibility.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                post.setVisibility(com.example.revHubBack.entity.PostVisibility.PUBLIC);
+            }
+        }
+        
         Post savedPost = postRepository.save(post);
         
-        // Check for mentions in the post content
         processMentions(savedPost, author);
         
-        System.out.println("Post saved with ID: " + savedPost.getId() + ", MediaType: " + savedPost.getMediaType());
         return savedPost;
     }
 
@@ -94,10 +121,28 @@ public class PostService {
         postRepository.delete(post);
     }
 
-    public List<Post> getPostsByUser(String username) {
+    public List<Post> getPostsByUser(String username, String currentUsername) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return postRepository.findByAuthorOrderByCreatedDateDesc(user);
+        
+        List<Post> userPosts = postRepository.findByAuthorOrderByCreatedDateDesc(user);
+        
+        if (currentUsername == null || !currentUsername.equals(username)) {
+            User currentUser = currentUsername != null ? userRepository.findByUsername(currentUsername).orElse(null) : null;
+            
+            boolean isFollowing = false;
+            if (currentUser != null) {
+                List<User> following = followRepository.findFollowing(currentUser);
+                isFollowing = following.stream().anyMatch(u -> u.getId().equals(user.getId()));
+            }
+            
+            return userPosts.stream()
+                .filter(post -> post.getVisibility() == com.example.revHubBack.entity.PostVisibility.PUBLIC || 
+                               (currentUser != null && isFollowing))
+                .collect(java.util.stream.Collectors.toList());
+        }
+        
+        return userPosts;
     }
     
     public Post savePost(Post post) {
@@ -110,23 +155,19 @@ public class PostService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Check if user already liked the post
         boolean isLiked = post.getLikes().stream()
                 .anyMatch(like -> like.getUser().getId().equals(user.getId()));
 
         if (isLiked) {
-            // Unlike
             post.getLikes().removeIf(like -> like.getUser().getId().equals(user.getId()));
             post.setLikesCount(post.getLikesCount() - 1);
         } else {
-            // Like
             Like like = new Like();
             like.setPost(post);
             like.setUser(user);
             post.getLikes().add(like);
             post.setLikesCount(post.getLikesCount() + 1);
             
-            // Create like notification
             notificationService.createLikeNotification(post.getAuthor(), user, postId);
         }
 
@@ -164,32 +205,23 @@ public class PostService {
     }
 
     public void deleteComment(Long postId, Long commentId, String username) {
-        System.out.println("[SERVICE] Deleting comment " + commentId + " from post " + postId + " by user " + username);
-        
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
-        System.out.println("[SERVICE] Post found: " + post.getId());
         
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        System.out.println("[SERVICE] User found: " + user.getUsername());
 
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
-        System.out.println("[SERVICE] Comment found: " + comment.getId() + " by " + comment.getAuthor().getUsername());
 
         if (!comment.getAuthor().getId().equals(user.getId()) && !post.getAuthor().getId().equals(user.getId())) {
-            System.out.println("[SERVICE] Authorization failed - Comment author: " + comment.getAuthor().getId() + ", User: " + user.getId() + ", Post author: " + post.getAuthor().getId());
             throw new RuntimeException("Unauthorized to delete this comment");
         }
 
-        System.out.println("[SERVICE] Authorization passed, deleting comment");
         commentRepository.delete(comment);
-        System.out.println("[SERVICE] Comment deleted from database");
         
         post.setCommentsCount(Math.max(0, post.getCommentsCount() - 1));
         postRepository.save(post);
-        System.out.println("[SERVICE] Post comment count updated to: " + post.getCommentsCount());
     }
     
     public List<Post> searchPosts(String query) {
@@ -205,7 +237,6 @@ public class PostService {
                 String content = post.getContent().toLowerCase();
                 String authorUsername = post.getAuthor().getUsername().toLowerCase();
                 
-                // Search in content, hashtags, and author username
                 return content.contains(searchTerm) || 
                        authorUsername.contains(searchTerm) ||
                        (searchTerm.startsWith("#") && content.contains(searchTerm)) ||
@@ -218,7 +249,6 @@ public class PostService {
         String content = post.getContent();
         if (content == null) return;
         
-        // Find all mentions in the format @username
         java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("@(\\w+)");
         java.util.regex.Matcher matcher = pattern.matcher(content);
         
@@ -230,7 +260,6 @@ public class PostService {
                     notificationService.createMentionNotification(mentionedUser, author, post.getId(), content);
                 }
             } catch (Exception e) {
-                System.out.println("Error processing mention for user: " + mentionedUsername + ", " + e.getMessage());
             }
         }
     }

@@ -42,29 +42,27 @@ public class AuthService {
 
     public String registerUser(RegisterRequest signUpRequest) {
         try {
-            System.out.println("Checking if username exists: " + signUpRequest.getUsername());
             if (userRepository.existsByUsername(signUpRequest.getUsername())) {
                 return "Error: Username is already taken!";
             }
 
-            System.out.println("Checking if email exists: " + signUpRequest.getEmail());
             if (userRepository.existsByEmail(signUpRequest.getEmail())) {
                 return "Error: Email is already in use!";
             }
 
-            System.out.println("Creating new user...");
             User user = new User();
             user.setUsername(signUpRequest.getUsername());
             user.setEmail(signUpRequest.getEmail());
             user.setPassword(encoder.encode(signUpRequest.getPassword()));
+            user.setVerificationToken(java.util.UUID.randomUUID().toString());
 
-            System.out.println("Saving user to database...");
             userRepository.save(user);
-            System.out.println("User saved successfully!");
-            return "User registered successfully!";
+            
+            // In a real application, send verification email here
+            System.out.println("Verification token for " + user.getEmail() + ": " + user.getVerificationToken());
+            
+            return "User registered successfully! Please check your email for verification.";
         } catch (Exception e) {
-            System.err.println("Error in registerUser: " + e.getMessage());
-            e.printStackTrace();
             throw new RuntimeException("Registration failed: " + e.getMessage());
         }
     }

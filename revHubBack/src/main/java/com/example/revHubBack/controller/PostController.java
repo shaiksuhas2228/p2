@@ -26,10 +26,19 @@ public class PostController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllPosts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "universal") String feedType,
+            Authentication authentication) {
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Post> posts = postService.getAllPosts(pageable);
+            String currentUsername = authentication != null ? authentication.getName() : null;
+            Page<Post> posts;
+            
+            if ("followers".equals(feedType)) {
+                posts = postService.getFollowersPosts(pageable, currentUsername);
+            } else {
+                posts = postService.getUniversalPosts(pageable);
+            }
             
             Map<String, Object> response = new HashMap<>();
             response.put("content", posts.getContent());
@@ -37,6 +46,7 @@ public class PostController {
             response.put("totalPages", posts.getTotalPages());
             response.put("size", posts.getSize());
             response.put("number", posts.getNumber());
+            response.put("feedType", feedType);
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -46,6 +56,7 @@ public class PostController {
             errorResponse.put("totalPages", 0);
             errorResponse.put("size", 0);
             errorResponse.put("number", 0);
+            errorResponse.put("feedType", feedType);
             return ResponseEntity.ok(errorResponse);
         }
     }
@@ -61,9 +72,10 @@ public class PostController {
     public ResponseEntity<Post> createPostWithFile(
             @RequestParam("content") String content,
             @RequestParam(value = "file", required = false) org.springframework.web.multipart.MultipartFile file,
+            @RequestParam(value = "visibility", defaultValue = "PUBLIC") String visibility,
             Authentication authentication) {
         try {
-            Post post = postService.createPost(content, file, authentication.getName());
+            Post post = postService.createPost(content, file, authentication.getName(), visibility);
             return ResponseEntity.ok(post);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
@@ -73,7 +85,8 @@ public class PostController {
     @PostMapping(consumes = {"application/json"})
     public ResponseEntity<Post> createPostJson(@Valid @RequestBody PostRequest postRequest, Authentication authentication) {
         try {
-            Post post = postService.createPost(postRequest.getContent(), null, authentication.getName());
+            String visibility = postRequest.getVisibility() != null ? postRequest.getVisibility() : "PUBLIC";
+            Post post = postService.createPost(postRequest.getContent(), null, authentication.getName(), visibility);
             if (postRequest.getImageUrl() != null && !postRequest.getImageUrl().isEmpty()) {
                 post.setImageUrl(postRequest.getImageUrl());
                 if (postRequest.getMediaType() != null && !postRequest.getMediaType().isEmpty()) {

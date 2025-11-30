@@ -26,8 +26,6 @@ public class NotificationMongoService {
             
             return notificationRepository.findByUserIdOrderByCreatedDateDesc(user.getId().toString());
         } catch (Exception e) {
-            System.out.println("Error in getUserNotifications: " + e.getMessage());
-            e.printStackTrace();
             return new java.util.ArrayList<>();
         }
     }
@@ -81,7 +79,6 @@ public class NotificationMongoService {
             
             return notificationRepository.countByUserIdAndReadStatusFalse(user.getId().toString());
         } catch (Exception e) {
-            System.out.println("Error in getUnreadCount: " + e.getMessage());
             return 0L;
         }
     }
@@ -93,12 +90,10 @@ public class NotificationMongoService {
                 .filter(n -> followRequestId.equals(n.getFollowRequestId()))
                 .forEach(notificationRepository::delete);
         } catch (Exception e) {
-            System.out.println("Error removing follow request notification: " + e.getMessage());
         }
     }
     
     public void createLikeNotification(User postOwner, User liker, Long postId) {
-        // Don't create notification if user likes their own post
         if (postOwner.getId().equals(liker.getId())) {
             return;
         }

@@ -25,8 +25,6 @@ public class NotificationController {
             List<NotificationMongo> notifications = notificationService.getUserNotifications(authentication.getName());
             return ResponseEntity.ok(notifications);
         } catch (Exception e) {
-            System.out.println("Error loading notifications: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.ok(new java.util.ArrayList<>());
         }
     }
@@ -47,7 +45,6 @@ public class NotificationController {
             long count = notificationService.getUnreadCount(authentication.getName());
             return ResponseEntity.ok(count);
         } catch (Exception e) {
-            System.out.println("Error loading unread count: " + e.getMessage());
             return ResponseEntity.ok(0L);
         }
     }

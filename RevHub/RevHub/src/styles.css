@@ -1,5 +1,4 @@
 :root {
-  /* Light Theme */
   --primary-purple: #8B5CF6;
   --gradient-pink: #EC4899;
   --orange-accent: #F97316;
@@ -10,7 +9,6 @@
 }
 
 [data-theme="dark"] {
-  /* Dark Theme */
   --primary-purple: #84CC16;
   --gradient-pink: #2563EB;
   --orange-accent: #7C3AED;

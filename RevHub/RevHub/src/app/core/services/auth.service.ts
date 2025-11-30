@@ -82,4 +82,16 @@ export class AuthService {
   getCurrentUser(): any {
     return this.currentUserSubject.value;
   }
+
+  forgotPassword(email: string): Observable<string> {
+    return this.http.post(`${this.apiUrl}/forgot-password`, { email }, { responseType: 'text' });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<string> {
+    return this.http.post(`${this.apiUrl}/reset-password`, { token, newPassword }, { responseType: 'text' });
+  }
+
+  searchUsers(query: string): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:8080/search/users?q=${query || ''}`);
+  }
 }

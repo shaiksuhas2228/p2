@@ -40,7 +40,6 @@ public class ChatService {
         
         ChatMessage savedMessage = chatMessageRepository.save(message);
         
-        // Create notification for new message
         createMessageNotification(receiver, sender, content);
         
         return savedMessage;

@@ -4,6 +4,8 @@ import com.example.revHubBack.dto.JwtResponse;
 import com.example.revHubBack.dto.LoginRequest;
 import com.example.revHubBack.dto.RegisterRequest;
 import com.example.revHubBack.service.AuthService;
+import com.example.revHubBack.service.PasswordResetService;
+import com.example.revHubBack.service.EmailVerificationService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,15 +31,12 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest signUpRequest) {
         try {
-            System.out.println("Registration request received for: " + signUpRequest.getUsername());
             String result = authService.registerUser(signUpRequest);
             if (result.startsWith("Error")) {
                 return ResponseEntity.badRequest().body(result);
             }
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            System.err.println("Registration error: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
         }
     }
@@ -45,5 +44,51 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<?> logoutUser() {
         return ResponseEntity.ok("User logged out successfully!");
+    }
+    
+    @Autowired
+    private PasswordResetService passwordResetService;
+    
+    @Autowired
+    private EmailVerificationService emailVerificationService;
+    
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody com.example.revHubBack.dto.PasswordResetRequest request) {
+        try {
+            String result = passwordResetService.createPasswordResetToken(request.getEmail());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+    
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody com.example.revHubBack.dto.PasswordResetConfirmRequest request) {
+        try {
+            String result = passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+    
+    @PostMapping("/send-verification")
+    public ResponseEntity<?> sendVerification(@RequestParam String email) {
+        try {
+            String result = emailVerificationService.sendVerificationEmail(email);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+    
+    @GetMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestParam String token) {
+        try {
+            String result = emailVerificationService.verifyEmail(token);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
     }
 }

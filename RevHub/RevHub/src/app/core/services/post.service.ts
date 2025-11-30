@@ -41,10 +41,11 @@ export class PostService {
 
   constructor(private http: HttpClient) { }
 
-  getPosts(page: number = 0, size: number = 10): Observable<PageResponse<Post>> {
+  getPosts(page: number = 0, size: number = 10, feedType: string = 'universal'): Observable<PageResponse<Post>> {
     const params = new HttpParams()
       .set('page', page.toString())
-      .set('size', size.toString());
+      .set('size', size.toString())
+      .set('feedType', feedType);
     return this.http.get<PageResponse<Post>>(this.apiUrl, { params });
   }
 
@@ -110,7 +111,6 @@ export class PostService {
   }
 
   deleteComment(postId: number, commentId: number): Observable<any> {
-    console.log('Calling DELETE:', `${this.apiUrl}/${postId}/comments/${commentId}`);
     return this.http.delete(`${this.apiUrl}/${postId}/comments/${commentId}`);
   }
   

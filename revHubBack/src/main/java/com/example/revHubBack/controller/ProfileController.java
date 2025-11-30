@@ -53,9 +53,10 @@ public class ProfileController {
     }
 
     @GetMapping("/{username}/posts")
-    public ResponseEntity<List<Post>> getUserPosts(@PathVariable String username) {
+    public ResponseEntity<List<Post>> getUserPosts(@PathVariable String username, Authentication authentication) {
         try {
-            List<Post> posts = postService.getPostsByUser(username);
+            String currentUsername = authentication != null ? authentication.getName() : null;
+            List<Post> posts = postService.getPostsByUser(username, currentUsername);
             return ResponseEntity.ok(posts);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -103,15 +104,12 @@ public class ProfileController {
     
     @DeleteMapping("/unfollow/{username}")
     public ResponseEntity<Map<String, String>> unfollowUser(@PathVariable String username, Authentication authentication) {
-        System.out.println("[CONTROLLER] Unfollow request: " + authentication.getName() + " -> " + username);
         try {
             followService.unfollowUser(authentication.getName(), username);
             Map<String, String> response = new HashMap<>();
             response.put("message", "Unfollowed successfully");
-            System.out.println("[CONTROLLER] Unfollow successful");
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            System.out.println("[CONTROLLER] Unfollow error: " + e.getMessage());
             Map<String, String> error = new HashMap<>();
             error.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(error);
@@ -175,12 +173,9 @@ public class ProfileController {
         try {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
-            System.out.println("Getting followers for user: " + username + " (ID: " + user.getId() + ")");
             List<User> followers = followRepository.findFollowers(user);
-            System.out.println("Found " + followers.size() + " followers");
             return ResponseEntity.ok(followers);
         } catch (RuntimeException e) {
-            System.err.println("Error getting followers: " + e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
@@ -190,12 +185,9 @@ public class ProfileController {
         try {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
-            System.out.println("Getting following for user: " + username + " (ID: " + user.getId() + ")");
             List<User> following = followRepository.findFollowing(user);
-            System.out.println("Found " + following.size() + " following");
             return ResponseEntity.ok(following);
         } catch (RuntimeException e) {
-            System.err.println("Error getting following: " + e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
@@ -234,7 +226,6 @@ public class ProfileController {
             List<User> users = userRepository.findByUsernameContainingIgnoreCase(query);
             return ResponseEntity.ok(users);
         } catch (Exception e) {
-            System.err.println("Error searching users: " + e.getMessage());
             return ResponseEntity.ok(new ArrayList<>());
         }
     }

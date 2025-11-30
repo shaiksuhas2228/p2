@@ -28,6 +28,10 @@ public class Post {
     private String imageUrl;
     
     private String mediaType;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PostVisibility visibility = PostVisibility.PUBLIC;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "author_id", nullable = false)

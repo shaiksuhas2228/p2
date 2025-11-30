@@ -34,6 +34,11 @@ public class User {
     
     @Column(nullable = false)
     private Boolean isPrivate = false;
+    
+    @Column(nullable = false)
+    private Boolean isVerified = false;
+    
+    private String verificationToken;
 
     @CreationTimestamp
     private LocalDateTime createdDate;
