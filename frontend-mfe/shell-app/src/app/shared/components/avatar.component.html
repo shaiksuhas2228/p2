@@ -1,0 +1,21 @@
+<div class="avatar-wrapper" [style.width.px]="size" [style.height.px]="size">
+  <img *ngIf="hasValidImage" 
+       [src]="src" 
+       class="rounded-circle" 
+       [alt]="name || 'Avatar'" 
+       [style.width.px]="size"
+       [style.height.px]="size"
+       style="object-fit: cover; border: 2px solid rgba(20, 184, 166, 0.3);"
+       (error)="onImageError()">
+  
+  <div *ngIf="!hasValidImage" 
+       class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+       [style.width.px]="size"
+       [style.height.px]="size"
+       [style.background]="getAvatarColor()"
+       [style.font-size.px]="size * 0.4"
+       style="border: 2px solid rgba(20, 184, 166, 0.3);">
+    {{ getInitial() }}
+  </div>
+  <div class="avatar-ring-animated"></div>
+</div>

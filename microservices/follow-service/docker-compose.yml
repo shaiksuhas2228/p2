@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  follow-service-db:
+    image: mysql:8.0
+    container_name: follow-service-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: follow_service_db
+      MYSQL_USER: follow_service
+      MYSQL_PASSWORD: followservice123
+    ports:
+      - "3310:3306"
+    volumes:
+      - follow_service_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    command: --innodb-buffer-pool-size=256M --max-connections=200
+    networks:
+      - follow-service-network
+
+  follow-service:
+    build: .
+    container_name: follow-service-app
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://follow-service-db:3306/follow_service_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: follow_service
+      SPRING_DATASOURCE_PASSWORD: followservice123
+    depends_on:
+      - follow-service-db
+    networks:
+      - follow-service-network
+
+volumes:
+  follow_service_data:
+
+networks:
+  follow-service-network:
+    driver: bridge

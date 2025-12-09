@@ -1,0 +1,12 @@
+com\revhub\searchservice\document\UserDocument.class
+com\revhub\searchservice\controller\SearchController.class
+com\revhub\searchservice\repository\UserSearchRepository.class
+com\revhub\searchservice\service\SearchService.class
+com\revhub\searchservice\repository\PostSearchRepository.class
+com\revhub\searchservice\document\PostDocument.class
+com\revhub\searchservice\SearchServiceApplication.class
+com\revhub\searchservice\dto\SearchResponse$PostSearchResult.class
+com\revhub\searchservice\config\ElasticsearchConfig.class
+com\revhub\searchservice\dto\SearchResponse$UserSearchResult.class
+com\revhub\searchservice\dto\SearchResponse.class
+com\revhub\searchservice\dto\SearchRequest.class

@@ -1,0 +1,13 @@
+com\revhub\feedservice\service\FeedService.class
+com\revhub\feedservice\dto\MediaResponse.class
+com\revhub\feedservice\dto\PostEvent.class
+com\revhub\feedservice\entity\UserFollowing.class
+com\revhub\feedservice\dto\FeedResponse.class
+com\revhub\feedservice\controller\FeedController.class
+com\revhub\feedservice\entity\FeedItem.class
+com\revhub\feedservice\service\PostServiceClient.class
+com\revhub\feedservice\config\RedisConfig.class
+com\revhub\feedservice\FeedServiceApplication.class
+com\revhub\feedservice\repository\UserFollowingRepository.class
+com\revhub\feedservice\kafka\PostEventConsumer.class
+com\revhub\feedservice\repository\FeedItemRepository.class

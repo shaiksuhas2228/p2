@@ -1,0 +1,16 @@
+com\revhub\chatservice\dto\ConversationResponse.class
+com\revhub\chatservice\config\WebSocketConfig.class
+com\revhub\chatservice\model\ChatMessage.class
+com\revhub\chatservice\repository\ConversationRepository.class
+com\revhub\chatservice\controller\ChatController.class
+com\revhub\chatservice\ChatServiceApplication.class
+com\revhub\chatservice\model\Conversation.class
+com\revhub\chatservice\repository\ChatMessageRepository.class
+com\revhub\chatservice\config\WebConfig.class
+com\revhub\chatservice\websocket\ChatWebSocketController$ChatTypingEvent.class
+com\revhub\chatservice\dto\ChatMessageResponse.class
+com\revhub\chatservice\config\CorsConfig.class
+com\revhub\chatservice\dto\ChatMessageRequest.class
+com\revhub\chatservice\service\ChatService.class
+com\revhub\chatservice\websocket\ChatWebSocketController.class
+com\revhub\chatservice\controller\HealthController.class

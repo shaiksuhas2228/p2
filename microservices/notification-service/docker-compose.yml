@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: notification-service-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: notification_service_db
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - notification-service-network
+
+  notification-service:
+    build: .
+    container_name: notification-service-app
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATA_MONGODB_HOST: mongodb
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: notification_service_db
+      SPRING_DATA_MONGODB_USERNAME: notif_user
+      SPRING_DATA_MONGODB_PASSWORD: notif123
+    depends_on:
+      - mongodb
+    networks:
+      - notification-service-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  notification-service-network:
+    driver: bridge

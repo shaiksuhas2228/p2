@@ -1,0 +1,14 @@
+com\revhub\userservice\controller\AuthController.class
+com\revhub\userservice\UserServiceApplication.class
+com\revhub\userservice\dto\JwtResponse.class
+com\revhub\userservice\service\AuthService.class
+com\revhub\userservice\controller\UserController.class
+com\revhub\userservice\dto\RegisterRequest.class
+com\revhub\userservice\service\JwtService.class
+com\revhub\userservice\repository\UserRepository.class
+com\revhub\userservice\service\EmailService.class
+com\revhub\userservice\config\SecurityConfig.class
+com\revhub\userservice\dto\LoginRequest.class
+com\revhub\userservice\config\CorsConfig.class
+com\revhub\userservice\entity\User.class
+com\revhub\userservice\controller\HealthController.class

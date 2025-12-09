@@ -1,0 +1,13 @@
+com\revhub\followservice\controller\HealthController.class
+com\revhub\followservice\dto\FollowGraphResponse.class
+com\revhub\followservice\service\FollowService.class
+com\revhub\followservice\entity\UserStats.class
+com\revhub\followservice\controller\FollowController.class
+com\revhub\followservice\repository\FollowRepository.class
+com\revhub\followservice\FollowServiceApplication.class
+com\revhub\followservice\dto\UserStatsResponse.class
+com\revhub\followservice\config\CorsConfig.class
+com\revhub\followservice\dto\FollowRequest.class
+com\revhub\followservice\repository\UserStatsRepository.class
+com\revhub\followservice\config\WebConfig.class
+com\revhub\followservice\entity\Follow.class

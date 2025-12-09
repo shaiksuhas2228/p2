@@ -1,0 +1,15 @@
+com\revhub\notificationservice\config\WebConfig.class
+com\revhub\notificationservice\service\NotificationService.class
+com\revhub\notificationservice\websocket\WebSocketConfig.class
+com\revhub\notificationservice\dto\NotificationResponse.class
+com\revhub\notificationservice\NotificationServiceApplication.class
+com\revhub\notificationservice\controller\NotificationWebSocketController.class
+com\revhub\notificationservice\model\UserPreference.class
+com\revhub\notificationservice\controller\NotificationController.class
+com\revhub\notificationservice\model\Notification.class
+com\revhub\notificationservice\config\CorsConfig.class
+com\revhub\notificationservice\websocket\NotificationWebSocketHandler.class
+com\revhub\notificationservice\repository\NotificationRepository.class
+com\revhub\notificationservice\repository\UserPreferenceRepository.class
+com\revhub\notificationservice\dto\NotificationRequest.class
+com\revhub\notificationservice\controller\HealthController.class

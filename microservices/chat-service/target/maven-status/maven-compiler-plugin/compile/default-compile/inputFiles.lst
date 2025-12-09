@@ -1,0 +1,15 @@
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\ChatServiceApplication.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\config\CorsConfig.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\config\WebConfig.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\config\WebSocketConfig.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\controller\ChatController.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\controller\HealthController.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\dto\ChatMessageRequest.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\dto\ChatMessageResponse.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\dto\ConversationResponse.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\model\ChatMessage.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\model\Conversation.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\repository\ChatMessageRepository.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\repository\ConversationRepository.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\service\ChatService.java
+C:\Users\acer\Downloads\RevHubTeam7final_2\RevHubTeam7final\RevHub\microservices\chat-service\src\main\java\com\revhub\chatservice\websocket\ChatWebSocketController.java
